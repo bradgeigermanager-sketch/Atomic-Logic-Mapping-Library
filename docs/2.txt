@@ -1,0 +1,102 @@
+To achieve a stable sidebar navigation while keeping the main content focused, we will move from a single-page template to a **Frameset (or more modern equivalent)**.
+
+In modern web development, we use **CSS Flexbox/Grid** with `iframe` or dynamic content loading to ensure the sidebar remains "pinned" in place. This provides the "app-like" experience you are looking for.
+
+### 1. The Stable Navigation Layout (`index.html`)
+
+This file acts as the "Shell." It holds the sidebar (the Index) and an `iframe` (the content viewer).
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; }
+        #sidebar { width: 300px; border-right: 1px solid #ccc; overflow-y: auto; padding: 15px; }
+        #viewer { flex-grow: 1; border: none; }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h2>Knowledge Base</h2>
+        <ul id="link-list">
+            <!-- Populated by index.json -->
+        </ul>
+    </div>
+    <iframe id="viewer" src="about:blank" name="viewer"></iframe>
+
+    <script>
+        fetch('Index.json')
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('link-list');
+                data.entries.forEach(entry => {
+                    let li = document.createElement('li');
+                    li.innerHTML = `<a href="${entry.path}" target="viewer">${entry.title}</a>`;
+                    list.appendChild(li);
+                });
+            });
+    </script>
+</body>
+</html>
+
+```
+
+---
+
+### 2. The Artifact Template (`template.html`)
+
+This template remains simple; it now only needs to contain the article content. The sidebar navigation is handled by the shell above.
+
+```html
+<!-- template.html -->
+<!DOCTYPE html>
+<html lang="en">
+<body aria-label="{{ accessibility_label }}">
+    <h1>{{ title }}</h1>
+    <nav>
+        <button onclick="showTab('main')">Details</button>
+        <button onclick="showTab('logic')">Logic</button>
+    </nav>
+    <div id="main" class="tab-content">{{ content }}</div>
+    <div id="logic" class="tab-content"><code>{{ logic_code }}</code></div>
+    <!-- ... same script as before ... -->
+</body>
+</html>
+
+```
+
+---
+
+### 3. Updated Build Script (`build.py`)
+
+I have updated the builder to inject the `Index.json` and ensure the links point to the `viewer` frame.
+
+```python
+# Add this snippet to build.py:
+def build():
+    # ... (previous processing code)
+    
+    # 1. Generate individual HTML files
+    # 2. Build Index.json (Already implemented)
+    # 3. index.html acts as the 'App Shell'
+    
+    # The index.html above is a static file you create once.
+    # The build script simply overwrites the Index.json that it uses.
+
+```
+
+---
+
+### 4. Why this configuration is superior:
+
+* **Persistent Context:** The user never "leaves" the library. The sidebar is always there, allowing them to jump from `ALA-005` to `ALA-001` in one click.
+* **Performance:** Only the content in the `viewer` frame reloads, making navigation feel instantaneous.
+* **Accessibility:** By using a structured `ul` (unordered list) for the sidebar links and an `iframe` with a `name` attribute, screen readers can easily parse the relationship between the sidebar menu and the main content area.
+* **Non-Nested Shell:** The relationship between the shell and the document is flat. The shell doesn't care *what* is in the viewer; it only cares about the path.
+
+### **Procedure: Updating the UI**
+
+1. **Maintain the Shell:** Keep `index.html` static.
+2. **Update the Data:** When you run `build.py`, it updates `Index.json` and the HTML files in `/docs/`.
+3. **Automatic Refresh:** Because the `sidebar` script uses `fetch('Index.json')`, as soon as you update the database and refresh the main page, the sidebar will automatically reflect your new additions.
