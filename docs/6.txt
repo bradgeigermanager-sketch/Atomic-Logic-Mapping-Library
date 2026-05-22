@@ -1,0 +1,84 @@
+To manage your Atomic Logical Artifacts (ALAs), you need a script that can reliably parse the metadata you’ve defined in your Markdown files and generate a central `Index.json` for your system agents.
+
+The following script assumes your ALA Markdown files use **YAML Front Matter** (the standard for metadata in documentation). This makes them readable by humans and easily parsed by Python.
+
+### 1. The Indexer Script (`indexer.py`)
+
+This script recursively scans a directory for `.md` files, extracts the metadata, and compiles it into `Index.json`.
+
+```python
+import os
+import json
+import frontmatter  # Install via: pip install python-frontmatter
+
+def generate_index(root_dir, output_file="Index.json"):
+    index = {"library_version": "1.0.0", "entries": []}
+    
+    for root, _, files in os.walk(root_dir):
+        for file in files:
+            if file.endswith(".md") and file != "README.md":
+                path = os.path.join(root, file)
+                try:
+                    # Load the ALA metadata (Front Matter)
+                    post = frontmatter.load(path)
+                    entry = {
+                        "uid": post.metadata.get("uid"),
+                        "title": post.metadata.get("title"),
+                        "category": post.metadata.get("category"),
+                        "path": path
+                    }
+                    index["entries"].append(entry)
+                except Exception as e:
+                    print(f"Error parsing {path}: {e}")
+                    
+    with open(output_file, 'w') as f:
+        json.dump(index, f, indent=4)
+    print(f"Index updated: {len(index['entries'])} artifacts indexed.")
+
+if __name__ == "__main__":
+    generate_index("./library")
+
+```
+
+---
+
+### 2. Standardized ALA File Format
+
+To ensure the script works, every ALA file in your `/library` folder should start with a YAML block like this:
+
+```markdown
+---
+uid: ALA-005
+title: "External Cable Box Signal Synchronization"
+category: "Diagnostics"
+---
+
+# External Cable Box Signal Synchronization
+
+*   **Simplified Logic:** If power and volume respond but guide/channel functions do not, the box is locked.
+*   **Detailed Explanation:** [Your technical reasoning here...]
+*   **Derived Logic:**
+```python
+    def evaluate_cable_status(pwr, vol, ch):
+        if pwr and vol and not ch:
+            return "ACTION_HARD_REBOOT"
+        return "ACTION_NONE"
+    ```
+*   **Raw Data Links:** `[/data/logs/cable_error_0522.log]`
+
+```
+
+---
+
+### 3. Workflow for Maintenance
+
+1. **Creation:** When you create a new logic artifact, create a new `.md` file in the appropriate subfolder (e.g., `/library/diagnostics/`).
+2. **Tagging:** Ensure the `---` YAML front matter is at the very top.
+3. **Indexing:** Run `python indexer.py` whenever you add or modify an artifact.
+4. **Agent Integration:** Your DAMMS agents (like the "Scout" or "Archivist") simply need to read `Index.json` to know exactly where to find the "Derived Logic" for any task.
+
+### Why this is effective:
+
+* **Dual-Use:** The files are clean Markdown (human-viewable) but carry structured data (machine-queryable).
+* **Decoupled:** The `indexer.py` script doesn't need to know the *content* of your logic; it only needs to know the *schema* of your metadata.
+* **Scalable:** You can add thousands of ALA files, and the index remains a lightning-fast JSON file.
