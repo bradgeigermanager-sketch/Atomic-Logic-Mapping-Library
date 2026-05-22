@@ -1,0 +1,79 @@
+To add search functionality to your stable sidebar, we will incorporate a simple **filter script**. This allows you to instantly narrow down your library as it grows, keeping the interface uncluttered while ensuring you can always find your specific logical artifacts.
+
+### 1. Updated Sidebar Shell (`index.html`)
+
+I have added a search input that filters the list in real-time as you type.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; }
+        #sidebar { width: 300px; border-right: 1px solid #ccc; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; }
+        #viewer { flex-grow: 1; border: none; }
+        #search-box { padding: 8px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h2>Knowledge Base</h2>
+        <input type="text" id="search-box" placeholder="Search logic..." onkeyup="filterList()">
+        <ul id="link-list"></ul>
+    </div>
+    <iframe id="viewer" src="about:blank" name="viewer"></iframe>
+
+    <script>
+        let library = [];
+        fetch('Index.json')
+            .then(response => response.json())
+            .then(data => {
+                library = data.entries;
+                renderList(library);
+            });
+
+        function renderList(data) {
+            const list = document.getElementById('link-list');
+            list.innerHTML = '';
+            data.forEach(entry => {
+                let li = document.createElement('li');
+                li.innerHTML = `<a href="${entry.path}" target="viewer">${entry.title}</a>`;
+                list.appendChild(li);
+            });
+        }
+
+        function filterList() {
+            const query = document.getElementById('search-box').value.toLowerCase();
+            const filtered = library.filter(e => e.title.toLowerCase().includes(query));
+            renderList(filtered);
+        }
+    </script>
+</body>
+</html>
+
+```
+
+---
+
+### 2. Why this is the "Final Polish" for your Interface
+
+* **Performance:** The filtering happens entirely in the browser (`filterList` runs on the local `library` variable), meaning there is zero lag, even with hundreds of articles.
+* **Persistence:** The search stays active in the sidebar, so you can quickly click through different results in the `viewer` frame while maintaining your search context.
+* **UX (User Experience):** It turns the static encyclopedia into a dynamic search tool, making it feel more like a professional internal software dashboard than a static document viewer.
+
+---
+
+### 3. Finalized Procedure for Your Library
+
+Now that your **Knowledge Base Interface** is complete, here is your finalized operational loop:
+
+1. **Library Management:**
+* Create Markdown file in `library/` (using YAML front matter for `uid`, `title`, `category`).
+* Run `python build.py`.
+
+
+2. **Navigation:**
+* Open `index.html` in your browser.
+* **Search** by typing into the sidebar.
+* **Click** a result; the artifact loads instantly in the `viewer` frame.
+* **Verify** the logic via the tabbed interface (Details vs. Logic).
