@@ -1,0 +1,107 @@
+This refined **Master Build Script (`build.py`)** acts as the single point of control for your knowledge base. It handles indexing, static site generation, and directory management in one non-nested, linear execution flow.
+
+### 1. The Master Build Script (`build.py`)
+
+This script uses `Jinja2` for cleaner templating, which is standard for professional documentation sites.
+
+```python
+import os
+import json
+import frontmatter
+import markdown
+from jinja2 import Template
+
+# 1. Configuration
+LIBRARY_DIR = "library"
+OUTPUT_DIR = "docs"
+TEMPLATE_PATH = "template.html"
+
+def build():
+    # Ensure build environment exists
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    index = {"library_version": "1.0.0", "entries": []}
+    
+    with open(TEMPLATE_PATH, 'r') as f:
+        template = Template(f.read())
+
+    # 2. Process Artifacts
+    for file in os.listdir(LIBRARY_DIR):
+        if file.endswith(".md"):
+            path = os.path.join(LIBRARY_DIR, file)
+            post = frontmatter.load(path)
+            
+            # Update Index Data
+            entry = {
+                "uid": post.metadata.get("uid"),
+                "title": post.metadata.get("title"),
+                "path": f"{post.metadata.get('uid')}.html"
+            }
+            index["entries"].append(entry)
+            
+            # Generate HTML Page
+            html_content = template.render(
+                title=post.metadata.get("title"),
+                content=markdown.markdown(post.content),
+                accessibility_label=post.metadata.get("accessibility_label", "Artifact entry")
+            )
+            
+            with open(os.path.join(OUTPUT_DIR, f"{post.metadata.get('uid')}.html"), 'w') as f:
+                f.write(html_content)
+    
+    # 3. Finalize Index
+    with open("Index.json", "w") as f:
+        json.dump(index, f, indent=4)
+    print(f"Build Complete: {len(index['entries'])} artifacts processed.")
+
+if __name__ == "__main__":
+    build()
+
+```
+
+---
+
+### 2. The Refined Template (`template.html`)
+
+Using Jinja2 variables (`{{ }}`), this template is now much cleaner and more accessible.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; }
+        .tab-content { display: none; padding: 20px; border: 1px solid #ccc; }
+        .active { display: block; }
+    </style>
+</head>
+<body aria-label="{{ accessibility_label }}">
+    <h1>{{ title }}</h1>
+    <nav>
+        <button onclick="showTab('main')">Details</button>
+        <button onclick="showTab('logic')">Logic</button>
+    </nav>
+    <div id="main" class="tab-content active">{{ content }}</div>
+    <div id="logic" class="tab-content"><code>[Logic code rendered here]</code></div>
+    <script>
+        function showTab(id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+    </script>
+</body>
+</html>
+
+```
+
+---
+
+### 3. Updated Procedure for System Management
+
+To ensure this library remains useful, implement this **Systematic Workflow**:
+
+1. **Drafting:** Create a new `.md` file in `/library/`.
+2. **Versioning:** Ensure each file has a `uid` (e.g., `ALA-005`).
+3. **The Build:** Run `python build.py`. This single command updates the **Machine Index** (`Index.json`) and the **Human Encyclopedia** (`/docs/`).
+4. **Verification:** Check `/docs/ALA-XXX.html` in your browser to confirm the accessibility and formatting.
