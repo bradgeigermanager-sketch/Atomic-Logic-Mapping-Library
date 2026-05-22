@@ -1,0 +1,40 @@
+This manifest organizes your **DAMMS Infrastructure** into a clear, navigable structure. Each component is categorized by its function (Logic, Interface, or Automation), ensuring your library remains modular and non-nested.
+
+### **Project Manifest: DAMMS Logical Architecture (v3.1.0)**
+
+| Component Type | Name | Path | Description |
+| --- | --- | --- | --- |
+| **Logic/Data** | `library/` | `/library/` | Directory storing Atomic Logical Artifacts (ALAs) in `.md` format. |
+| **Logic/Data** | `Index.json` | `/Index.json` | The machine-readable registry of all library artifacts. |
+| **Logic/Data** | `data/` | `/data/` | Raw evidentiary storage (Logs, CSVs, Metadata). |
+| **Interface** | `index.html` | `/index.html` | Stable sidebar-nav shell with real-time search functionality. |
+| **Interface** | `template.html` | `/template.html` | Tabbed-view template for individual artifact display. |
+| **Automation** | `build.py` | `/build.py` | The orchestrator: generates `Index.json` and renders HTML artifacts. |
+| **Documentation** | `docs/` | `/docs/` | Generated static encyclopedia files (Human-viewable). |
+
+---
+
+### **Component Details & Specifications**
+
+#### **1. Atomic Logical Artifact (ALA) Standard**
+
+Every entry must adhere to the following metadata structure (YAML Front Matter):
+
+* `uid`: Unique identifier (e.g., `ALA-001`).
+* `title`: Human-readable name.
+* `category`: Taxonomic label for sidebar grouping.
+* `accessibility_label`: Screen-reader identifier.
+
+#### **2. The "Three-Pass" Verification Engine**
+
+Your logic flow is formalized into the following functional sequence:
+
+* **Internal Pass:** `check_internal_logs` (Validates temporal/physical proximity).
+* **External Pass:** `check_external_datasources` (Validates entity/org credibility).
+* **Contextual Pass:** `cross_reference_master_lib` (Maps findings to existing history).
+
+#### **3. Interface Interaction Logic**
+
+* **Search Filter:** Local browser-side filtering of `Index.json`.
+* **Content Injection:** Tab-based display (`main` vs `logic`) for immediate context switching.
+* **Stability:** Frame-based viewing (`iframe`) to maintain sidebar state during document refresh.
